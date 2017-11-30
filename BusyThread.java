@@ -1,21 +1,43 @@
 import java.util.Random;
+import java.util.concurrent.Semaphore;
 
-public class BusyThread implements Runnable {
+public class BusyThread {
+
+    public boolean finishedWork = false;
+    public int runCount;
+    public int[][] doWorkMatrix = new int[10][10];
 
     private Random rand = new Random();
-    public int priority;
-    public int[][] doWorkMatrix = new int[10][10];
+    private Semaphore sem = new Semaphore(0);
+
+    Thread thread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                sem.acquire();
+            } catch(InterruptedException e) {}
+
+            finishedWork = false;
+
+            // DO WORK
+            for (int i = 0; i < runCount; ++i) {
+                for (int j = 0; j < 100; ++j) {
+                    doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)] = doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)]
+                        * doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)];
+                }
+            }
+
+            finishedWork = true;
+        }
+    });
 
     public BusyThread() {
         fillMatrix();
     }
 
-    public BusyThread(int p) {
-        this.priority = p;
+    public BusyThread(int rc) {
+        this.runCount = rc;
         fillMatrix();
-    }
-
-    public void run() {
     }
 
     private void fillMatrix() {
@@ -33,23 +55,9 @@ public class BusyThread implements Runnable {
         }
     }
 
-    public void runWithCount(int runCount) {
-        for (int i = 0; i < runCount; ++i) {
+    public void runWithCount() {
+        for (int i = 0; i < this.runCount; ++i) {
             doWork();
         }
-    }
-
-    public void printMatrix() {
-        for (int i = 0; i < 10; ++i) {
-            for (int j = 0; j < 10; ++j) {
-                System.out.print(doWorkMatrix[i][j] + (j == 9 ? "" : ", "));
-            }
-
-            System.out.println();
-        }
-    }
-
-    public void setPriority(int p) {
-        this.priority = p;
     }
 }
