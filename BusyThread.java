@@ -4,42 +4,39 @@ import java.util.concurrent.Semaphore;
 public class BusyThread {
 
     public int runCount;
+    public Thread thread;
     public int numCompletions;
     public boolean finishedWork = true;
+    public Semaphore sem = new Semaphore(0);
     public int[][] doWorkMatrix = new int[10][10];
 
+    private int priority;
     private Random rand = new Random();
-    public Semaphore sem = new Semaphore(0);
 
-    Thread thread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            //try {
-                //sem.acquire();
-                finishedWork = false;
-
-                // DO WORK
-                runWithCount();
-                //for (int i = 0; i < runCount; ++i) {
-                    //for (int j = 0; j < 100; ++j) {
-                        //doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)] = doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)]
-                            //* doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)];
-                    //}
-                //}
-
-                finishedWork = true;
-            //} catch(InterruptedException e) {}
-        }
-    });
-
-    public BusyThread() {
-        fillMatrix();
-    }
 
     public BusyThread(int rc, int p) {
         this.runCount = rc;
-        this.thread.setPriority(Thread.MAX_PRIORITY - p);
+        this.numCompletions = 0;
+        this.priority = Thread.MAX_PRIORITY - p;
         fillMatrix();
+    }
+
+    public void createThread() {
+        thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    sem.acquire();
+                    finishedWork = false;
+
+                    runWithCount();
+
+                    finishedWork = true;
+                } catch(InterruptedException e) {}
+            }
+        });
+
+        thread.setPriority(this.priority);
     }
 
     public void runThread() {
@@ -53,22 +50,18 @@ public class BusyThread {
     }
 
     public void doWork() {
-        try {
-            sem.acquire();
-        } catch (InterruptedException e) {}
-
         for (int i = 0; i < 100; ++i) {
             doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)] = doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)]
                 * doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)];
         }
-
-        numCompletions++;
     }
 
     public void runWithCount() {
         for (int i = 0; i < this.runCount; ++i) {
             doWork();
         }
+
+        numCompletions++;
     }
 
     public boolean isDone() {
