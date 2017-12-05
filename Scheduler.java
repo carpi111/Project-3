@@ -1,125 +1,120 @@
 import java.lang.Thread;
 import java.util.concurrent.Semaphore;
+import java.util.TimerTask;
 
 public class Scheduler {
+    private int numOverrunsT0;
+    private int numOverrunsT1;
+    private int numOverrunsT2;
+    private int numOverrunsT3;
 
-    private int numOverrunsBt0;
-    private int numOverrunsBt1;
-    private int numOverrunsBt2;
-    private int numOverrunsBt3;
+    private boolean isFinished;
 
     Semaphore sem = new Semaphore(0);
 
-    BusyThread bt0;
-    BusyThread bt1;
-    BusyThread bt2;
-    BusyThread bt3;
+    BusyThread bt0 = new BusyThread(1,  2);
+    BusyThread bt1 = new BusyThread(2,  3);
+    BusyThread bt2 = new BusyThread(4,  4);
+    BusyThread bt3 = new BusyThread(16, 5);
 
-    Thread schedulerThread;
-
+    Thread schedulerThread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            bt0.runThread();
+            bt1.runThread();
+            bt2.runThread();
+            bt3.runThread();
+            schedule();
+        }
+    });
 
     public Scheduler() {
-        bt0 = new BusyThread(1,  2);
-        bt1 = new BusyThread(2,  3);
-        bt2 = new BusyThread(4,  4);
-        bt3 = new BusyThread(16, 5);
-
-        schedulerThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    schedule();
-                    break;
-                }
-            }
-        });
-
         schedulerThread.setPriority(Thread.MAX_PRIORITY);
-
-        bt0.thread.start();
-        bt1.thread.start();
-        bt2.thread.start();
-        bt3.thread.start();
     }
 
     public void schedule() {
+        // RUN FOR 16 PERIODS, 10 TIMES
         for (int i = 0; i < 160; ++i) {
+            // WAIT FOR TIMER TO GIVE THE GO AHEAD
             try {
                 sem.acquire();
             } catch (InterruptedException e) {}
 
+            // CHECK T0 OVERRUNS
             if (!bt0.isDone()) {
-                //System.out.println("bt0 OVERRUN");
-                numOverrunsBt0++;
+                numOverrunsT0++;
             }
 
             // SCHEDULE T0
-            //bt0.createThread();
-            //bt0.thread.start();
             bt0.sem.release();
 
+            // THREAD T1
             if (i % 2 == 0) {
+                // CHECK T1 OVERRUNS
                 if (!bt1.isDone()) {
-                    //System.out.println("bt1 OVERRUN");
-                    numOverrunsBt1++;
+                    numOverrunsT1++;
                 }
 
                 // SCHEDULE T1
-                //bt1.createThread();
-                //bt1.thread.start();
                 bt1.sem.release();
             }
 
+            // THREAD T2
             if (i % 4 == 0) {
+                // CHECK T2 OVERRUNS
                 if (!bt2.isDone()) {
-                    //System.out.println("bt2 OVERRUN");
-                    numOverrunsBt2++;
+                    numOverrunsT2++;
                 }
 
                 // SCHEDULE T2
-                //bt2.createThread();
-                //bt2.thread.start();
                 bt2.sem.release();
             }
 
+            // THREAD T3
             if (i % 16 == 0) {
+                // CHECK T3 OVERRUNS
                 if (!bt3.isDone()) {
-                    //System.out.println("bt3 OVERRUN");
-                    numOverrunsBt3++;
+                    numOverrunsT3++;
                 }
 
                 // SCHEDULE T3
-                //bt3.createThread();
-                //bt3.thread.start();
                 bt3.sem.release();
             }
-
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {}
         }
+
+        bt0.sem.release();
+        bt1.sem.release();
+        bt2.sem.release();
+        bt3.sem.release();
+
+        bt0.setEveryoneDone(true);
+        bt1.setEveryoneDone(true);
+        bt2.setEveryoneDone(true);
+        bt3.setEveryoneDone(true);
+
+        isFinished = true;
+    }
+
+    public boolean isFinished() {
+        return this.isFinished;
     }
 
     public void joinThreads() {
-        try {
-            bt0.thread.join();
-            bt1.thread.join();
-            bt2.thread.join();
-            bt3.thread.join();
-        } catch (InterruptedException e) {
-            System.out.println("*** FAILED TO JOIN THREADS ***");
-        }
+        bt0.joinThread();
+        bt1.joinThread();
+        bt2.joinThread();
+        bt3.joinThread();
     }
 
     public void printResults() {
-        System.out.println("--- RESULTS ---");
+        System.out.println("\n--- RESULTS ---\n");
         System.out.println("T0 COMPLETIONS: " + bt0.numCompletions);
-        System.out.println("T0 OVERRUNS:    " + numOverrunsBt0);
+        System.out.println("T0 OVERRUNS:    " + numOverrunsT0);
         System.out.println("\nT1 COMPLETIONS: " + bt1.numCompletions);
-        System.out.println("T1 OVERRUNS:    " + numOverrunsBt1);
+        System.out.println("T1 OVERRUNS:    " + numOverrunsT1);
         System.out.println("\nT2 COMPLETIONS: " + bt2.numCompletions);
-        System.out.println("T2 OVERRUNS:    " + numOverrunsBt2);
+        System.out.println("T2 OVERRUNS:    " + numOverrunsT2);
         System.out.println("\nT3 COMPLETIONS: " + bt3.numCompletions);
-        System.out.println("T3 OVERRUNS:    " + numOverrunsBt3);
+        System.out.println("T3 OVERRUNS:    " + numOverrunsT3 + "\n");
     }
 }
