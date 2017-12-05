@@ -3,12 +3,10 @@ import java.util.concurrent.Semaphore;
 
 public class Scheduler {
 
-    public int numOverrunsBt0;
-    public int numOverrunsBt1;
-    public int numOverrunsBt2;
-    public int numOverrunsBt3;
-
-    public int timeUnit;
+    private int numOverrunsBt0;
+    private int numOverrunsBt1;
+    private int numOverrunsBt2;
+    private int numOverrunsBt3;
 
     Semaphore sem = new Semaphore(0);
 
@@ -19,12 +17,6 @@ public class Scheduler {
 
     Thread schedulerThread;
 
-    //Thread thread = new Thread(new Runnable() {
-        //@Override
-        //public void run() {
-            //schedule();
-        //}
-    //});
 
     public Scheduler() {
         bt0 = new BusyThread(1,  2);
@@ -32,23 +24,26 @@ public class Scheduler {
         bt2 = new BusyThread(4,  4);
         bt3 = new BusyThread(16, 5);
 
-        timeUnit = -1;
-
         schedulerThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                schedule();
+                while (true) {
+                    schedule();
+                    break;
+                }
             }
         });
 
         schedulerThread.setPriority(Thread.MAX_PRIORITY);
+
+        bt0.thread.start();
+        bt1.thread.start();
+        bt2.thread.start();
+        bt3.thread.start();
     }
 
     public void schedule() {
-
-        for (int i = 0; i < 16; ++i) {
-            timeUnit++;
-
+        for (int i = 0; i < 160; ++i) {
             try {
                 sem.acquire();
             } catch (InterruptedException e) {}
@@ -59,47 +54,49 @@ public class Scheduler {
             }
 
             // SCHEDULE T0
-            bt0.createThread();
-            bt0.thread.start();
+            //bt0.createThread();
+            //bt0.thread.start();
             bt0.sem.release();
 
-            if (timeUnit % 2 == 0) {
+            if (i % 2 == 0) {
                 if (!bt1.isDone()) {
                     //System.out.println("bt1 OVERRUN");
                     numOverrunsBt1++;
                 }
 
                 // SCHEDULE T1
-                bt1.createThread();
-                bt1.thread.start();
+                //bt1.createThread();
+                //bt1.thread.start();
                 bt1.sem.release();
             }
 
-            if (timeUnit % 4 == 0) {
+            if (i % 4 == 0) {
                 if (!bt2.isDone()) {
                     //System.out.println("bt2 OVERRUN");
                     numOverrunsBt2++;
                 }
 
                 // SCHEDULE T2
-                bt2.createThread();
-                bt2.thread.start();
+                //bt2.createThread();
+                //bt2.thread.start();
                 bt2.sem.release();
             }
 
-            if (timeUnit % 16 == 0) {
+            if (i % 16 == 0) {
                 if (!bt3.isDone()) {
                     //System.out.println("bt3 OVERRUN");
                     numOverrunsBt3++;
                 }
 
                 // SCHEDULE T3
-                bt3.createThread();
-                bt3.thread.start();
+                //bt3.createThread();
+                //bt3.thread.start();
                 bt3.sem.release();
             }
 
-            sem.release();
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {}
         }
     }
 

@@ -3,41 +3,56 @@ import java.util.concurrent.Semaphore;
 
 public class BusyThread {
 
-    public int runCount;
-    public Thread thread;
+    public int period;
     public int numCompletions;
     public boolean finishedWork = true;
     public Semaphore sem = new Semaphore(0);
-    public int[][] doWorkMatrix = new int[10][10];
 
     private int priority;
     private Random rand = new Random();
+    private int[][] doWorkMatrix = new int[10][10];
 
-
-    public BusyThread(int rc, int p) {
-        this.runCount = rc;
-        this.numCompletions = 0;
-        this.priority = Thread.MAX_PRIORITY - p;
-        fillMatrix();
-    }
-
-    public void createThread() {
-        thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
+    Thread thread = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                while (true) {
                     sem.acquire();
+                    // mutex.lock
                     finishedWork = false;
-
+                    //mutex.unlock
                     runWithCount();
-
                     finishedWork = true;
-                } catch(InterruptedException e) {}
-            }
-        });
+                }
+            } catch(InterruptedException e) {}
+        }
+    });
 
-        thread.setPriority(this.priority);
+
+    public BusyThread(int per, int pri) {
+        fillMatrix();
+        this.period = per;
+        thread.setPriority(Thread.MAX_PRIORITY - pri);
     }
+
+    //public void createThread() {
+        //thread = new Thread(new Runnable() {
+            //@Override
+            //public void run() {
+                //try {
+                    //while (true) {
+                        //sem.acquire();
+                        //finishedWork = false;
+
+                        //runWithCount();
+
+                        //finishedWork = true;
+                    //}
+                //} catch(InterruptedException e) {}
+            //}
+        //});
+
+    //}
 
     public void runThread() {
         this.thread.start();
@@ -57,7 +72,7 @@ public class BusyThread {
     }
 
     public void runWithCount() {
-        for (int i = 0; i < this.runCount; ++i) {
+        for (int i = 0; i < this.period; ++i) {
             doWork();
         }
 
