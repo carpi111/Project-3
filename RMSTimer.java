@@ -7,6 +7,7 @@ public class RMSTimer extends TimerTask {
         this.scheduler = sched;
     }
 
+    // GETS CALLED BY 'scheduleAtFixedRate()' IN MAIN
     @Override
     public void run() {
         scheduler.sem.release();

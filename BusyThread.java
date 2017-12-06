@@ -2,28 +2,25 @@ import java.util.Random;
 import java.util.concurrent.Semaphore;
 
 public class BusyThread {
-    public int period;
-    public int numCompletions;
-    public boolean everyoneDone;
-    public boolean finishedWork = true;
     public Semaphore sem = new Semaphore(0);
 
+    private int period;
+    private int numCompletions;
     private Random rand = new Random();
+    private boolean finishedWork = true;
     private int[][] doWorkMatrix = new int[10][10];
 
     Thread thread = new Thread(new Runnable() {
         @Override
         public void run() {
             try {
-                while (!everyoneIsDone()) {
+                for (int i = 0; i < 160; ++i) {
                     sem.acquire();
-                    // mutex.lock
                     finishedWork = false;
-                    //mutex.unlock
                     runWithCount();
                     finishedWork = true;
                 }
-            } catch(InterruptedException e) {}
+            } catch(Exception e) {}
         }
     });
 
@@ -40,34 +37,34 @@ public class BusyThread {
     public void joinThread() {
         try {
             this.thread.join();
-        } catch (InterruptedException e) {}
-    }
-
-    public void doWork() {
-        for (int i = 0; i < 10000; ++i) {
-            doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)] = doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)]
-                * doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)];
-        }
-
-        numCompletions++;
-    }
-
-    public void runWithCount() {
-        for (int i = 0; i < this.period; ++i) {
-            doWork();
-        }
+        } catch (Exception e) {}
     }
 
     public boolean isDone() {
         return this.finishedWork;
     }
 
-    public void setEveryoneDone(boolean val) {
-        this.everyoneDone = val;
+    public int getNumCompletions() {
+        return this.numCompletions;
     }
 
-    private boolean everyoneIsDone() {
-        return this.everyoneDone;
+    private void doWork() {
+        // CHOOSE A RANDOM INDEX,
+        // CHOOSE TWO MORE RANDOM INDEXES,
+        // MULTIPLY THEM INTO THE FIRST INDEX
+        for (int i = 0; i < 10000; ++i) {
+            doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)]
+            = doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)]
+                * doWorkMatrix[rand.nextInt(10)][rand.nextInt(10)];
+        }
+
+        numCompletions++;
+    }
+
+    private void runWithCount() {
+        for (int i = 0; i < this.period; ++i) {
+            doWork();
+        }
     }
 
     private void fillMatrix() {

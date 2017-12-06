@@ -8,17 +8,22 @@ public class Project3 {
 
         RMS.schedulerThread.start();
 
+        // CALL schedTimer 'run()' EVERY 10ms WITH NO DELAY
         timer.scheduleAtFixedRate(schedTimer, 0L, 10L);
 
+        // WAIT UNTIL EVERYONE IS DONE TO JOIN AND PRINT RESULTS
         while (!RMS.isFinished()) {
-            System.out.print("");
+            // COULDN'T LEAVE THE LOOP EMPTY WITHOUT IT GETTING STUCK HERE
+            try {
+                Thread.sleep(10);
+            } catch (Exception e) {}
         }
 
+        // CLEAN UP AND PRINT RESULTS
         try {
             RMS.joinThreads();
-            RMS.schedulerThread.join();
             timer.cancel();
             RMS.printResults();
-        } catch (InterruptedException e) {}
+        } catch (Exception e) {}
     }
 }
