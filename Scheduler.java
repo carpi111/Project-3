@@ -6,9 +6,8 @@ public class Scheduler {
     private int numOverrunsT2;
     private int numOverrunsT3;
 
-    private boolean isFinished;
-
     Semaphore sem = new Semaphore(0);
+    Semaphore mainSem = new Semaphore(0);
 
     BusyThread bt0 = new BusyThread(1,  2);
     BusyThread bt1 = new BusyThread(2,  4);
@@ -83,11 +82,7 @@ public class Scheduler {
         bt3.thread.interrupt();
 
         // FLAG MAIN TO PRINT RESULTS
-        isFinished = true;
-    }
-
-    public boolean isFinished() {
-        return this.isFinished;
+        mainSem.release();
     }
 
     public void joinThreads() {
